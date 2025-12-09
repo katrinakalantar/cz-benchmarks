@@ -13,6 +13,11 @@ from .perturbation_expression_prediction import (
     PerturbationExpressionPredictionTask,
     PerturbationExpressionPredictionTaskInput,
 )
+from .rare_cell_detection import (
+    RareCellDetectionOutput,
+    RareCellDetectionTask,
+    RareCellDetectionTaskInput,
+)
 
 __all__ = [
     "CrossSpeciesIntegrationTaskInput",
@@ -24,4 +29,7 @@ __all__ = [
     "PerturbationExpressionPredictionTask",
     "PerturbationExpressionPredictionTaskInput",
     "PerturbationExpressionPredictionOutput",
+    "RareCellDetectionTask",
+    "RareCellDetectionTaskInput",
+    "RareCellDetectionOutput",
 ]
