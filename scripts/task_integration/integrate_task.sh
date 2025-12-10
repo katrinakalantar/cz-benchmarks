@@ -339,7 +339,7 @@ if [[ "$DRY_RUN" == true ]]; then
     echo "=========================================="
     echo ""
     print_info "Prompt saved to: $PROMPT_FILE"
-    print_info "To execute, run: claude --prompt \"\$(cat $PROMPT_FILE)\""
+    print_info "To execute, run: claude \"\$(cat $PROMPT_FILE)\""
     exit 0
 fi
 
@@ -380,7 +380,7 @@ echo ""
 sleep 2
 
 # Launch Claude Code
-claude --prompt "$(cat "$PROMPT_FILE")"
+claude "$(cat "$PROMPT_FILE")"
 
 # Clean up temp file
 rm -f "$PROMPT_FILE"
