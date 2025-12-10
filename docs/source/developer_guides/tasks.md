@@ -38,6 +38,7 @@ Each task class implements a specific evaluation goal. All tasks are located und
 - [`CrossSpeciesIntegrationTask`](../autoapi/czbenchmarks/tasks/single_cell/cross_species/index): A multi-dataset task that evaluates how well models embed cells from different species into a shared space, using metrics like entropy per cell and species-aware silhouette scores.
 - [`PerturbationExpressionPredictionTask`](../autoapi/czbenchmarks/tasks/single_cell/perturbation_expression_prediction/index): Designed for perturbation models. Compares the model's ability to predict masked gene expression levels relative to ground truth with Spearman correlation.
 - [`SequentialOrganizationTask`](../autoapi/czbenchmarks/tasks/sequential/index): Evaluates sequential consistency in embeddings using time point labels. Computes metrics like silhouette score and sequential alignment to assess how well embeddings preserve sequential organization between cells.
+- [`RareCellDetectionTask`](../autoapi/czbenchmarks/tasks/single_cell/rare_cell_detection/index): Evaluates how well embeddings capture rare cell types by automatically identifying rare populations and testing classification performance using multiple classifiers. Reports both binary metrics (rare vs. non-rare) and per-type performance metrics.
 
 For instructions on **adding a new custom task**, see [How to Add a Custom Task](../how_to_guides/add_new_task.md).
 

@@ -18,6 +18,8 @@ from czbenchmarks.tasks.label_prediction import (
 from czbenchmarks.tasks.single_cell import (
     CrossSpeciesIntegrationTask,
     CrossSpeciesIntegrationTaskInput,
+    RareCellDetectionTask,
+    RareCellDetectionTaskInput,
 )
 from czbenchmarks.datasets.types import Organism
 from czbenchmarks.metrics.types import MetricResult
@@ -114,6 +116,12 @@ def test_embedding_invalid_input(fixture_data):
         (
             MetadataLabelPredictionTask,
             lambda obs: MetadataLabelPredictionTaskInput(labels=obs["cell_type"]),
+        ),
+        (
+            RareCellDetectionTask,
+            lambda obs: RareCellDetectionTaskInput(
+                obs=obs, labels=obs["cell_type"], rarity_threshold=0.1, min_cells=5
+            ),
         ),
     ],
 )

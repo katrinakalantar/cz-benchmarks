@@ -23,7 +23,9 @@ from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import (
     accuracy_score,
     adjusted_rand_score,
+    balanced_accuracy_score,
     f1_score,
+    matthews_corrcoef,
     mean_squared_error,
     normalized_mutual_info_score,
     precision_score,
@@ -270,4 +272,109 @@ metrics_registry.register(
     required_args={"a", "b"},
     description="Spearman correlation between true and predicted values",
     tags={"label_prediction", "perturbation"},
+)
+
+# Rare cell detection metrics
+metrics_registry.register(
+    MetricType.BALANCED_ACCURACY,
+    func=balanced_accuracy_score,
+    required_args={"y_true", "y_pred"},
+    description="Balanced accuracy score for imbalanced datasets",
+    tags={"rare_cell_detection", "classification"},
+)
+
+metrics_registry.register(
+    MetricType.MCC,
+    func=matthews_corrcoef,
+    required_args={"y_true", "y_pred"},
+    description="Matthews Correlation Coefficient for binary classification",
+    tags={"rare_cell_detection", "classification"},
+)
+
+
+def specificity_score(y_true, y_pred):
+    """Calculate specificity (true negative rate)."""
+    tn = ((~y_true) & (~y_pred)).sum()
+    fp = ((~y_true) & y_pred).sum()
+    return float(tn / (tn + fp) if (tn + fp) > 0 else 0)
+
+
+metrics_registry.register(
+    MetricType.SPECIFICITY,
+    func=specificity_score,
+    required_args={"y_true", "y_pred"},
+    description="Specificity (true negative rate) for binary classification",
+    tags={"rare_cell_detection", "classification"},
+)
+
+
+def mean_recall_per_type(y_true, y_pred, rare_types):
+    """Calculate mean recall across rare cell types."""
+    recalls = []
+    for ct in rare_types:
+        true_mask = y_true == ct
+        pred_mask = y_pred == ct
+        if true_mask.sum() == 0:
+            continue
+        tp = (true_mask & pred_mask).sum()
+        fn = (true_mask & ~pred_mask).sum()
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        recalls.append(recall)
+    return float(np.mean(recalls) if recalls else 0)
+
+
+metrics_registry.register(
+    MetricType.MEAN_RECALL_PER_TYPE,
+    func=mean_recall_per_type,
+    required_args={"y_true", "y_pred", "rare_types"},
+    description="Mean recall across individual rare cell types",
+    tags={"rare_cell_detection"},
+)
+
+
+def min_recall_per_type(y_true, y_pred, rare_types):
+    """Calculate minimum recall across rare cell types."""
+    recalls = []
+    for ct in rare_types:
+        true_mask = y_true == ct
+        pred_mask = y_pred == ct
+        if true_mask.sum() == 0:
+            continue
+        tp = (true_mask & pred_mask).sum()
+        fn = (true_mask & ~pred_mask).sum()
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0
+        recalls.append(recall)
+    return float(np.min(recalls) if recalls else 0)
+
+
+metrics_registry.register(
+    MetricType.MIN_RECALL_PER_TYPE,
+    func=min_recall_per_type,
+    required_args={"y_true", "y_pred", "rare_types"},
+    description="Minimum recall across individual rare cell types",
+    tags={"rare_cell_detection"},
+)
+
+
+def mean_precision_per_type(y_true, y_pred, rare_types):
+    """Calculate mean precision across rare cell types."""
+    precisions = []
+    for ct in rare_types:
+        true_mask = y_true == ct
+        pred_mask = y_pred == ct
+        if true_mask.sum() == 0:
+            continue
+        tp = (true_mask & pred_mask).sum()
+        fp = (~true_mask & pred_mask).sum()
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0
+        precisions.append(precision)
+    return float(np.mean(precisions) if precisions else 0)
+
+
+metrics_registry.register(
+    MetricType.MEAN_PRECISION_PER_TYPE,
+    func=mean_precision_per_type,
+    required_args={"y_true", "y_pred", "rare_types"},
+    description="Mean precision across individual rare cell types",
+    tags={"rare_cell_detection"},
 )
