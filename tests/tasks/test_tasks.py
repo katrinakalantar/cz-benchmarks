@@ -18,6 +18,8 @@ from czbenchmarks.tasks.label_prediction import (
 from czbenchmarks.tasks.single_cell import (
     CrossSpeciesIntegrationTask,
     CrossSpeciesIntegrationTaskInput,
+    KkTestTask,
+    KkTestTaskInput,
 )
 from czbenchmarks.datasets.types import Organism
 from czbenchmarks.metrics.types import MetricResult
@@ -196,3 +198,52 @@ def test_cross_species_task(embedding_matrix, obs):
 
     except Exception as e:
         pytest.fail(f"CrossSpeciesIntegrationTask failed unexpectedly: {e}")
+
+
+def test_kk_test_task(dummy_anndata):
+    """Test that KkTestTask executes without errors."""
+    import numpy as np
+
+    task = KkTestTask()
+
+    # Get anndata and ensure it has appropriate cell types with rare types
+    adata = dummy_anndata["anndata"]
+
+    # Modify cell types to include some rare types
+    n_cells = len(adata)
+    cell_types = np.array(['common_A'] * int(0.7 * n_cells) +
+                          ['common_B'] * int(0.2 * n_cells) +
+                          ['rare_C'] * int(0.05 * n_cells) +
+                          ['rare_D'] * int(0.05 * n_cells))
+    np.random.shuffle(cell_types)
+    adata.obs['cell_type'] = cell_types[:n_cells]
+
+    # Create task input
+    task_input = KkTestTaskInput(
+        cell_type_key='cell_type',
+        rarity_threshold=0.08,
+        min_cells=10,
+    )
+
+    try:
+        # KkTestTask requires AnnData to be stored
+        task._adata = adata
+
+        # Test regular task execution with embeddings
+        embedding_matrix = dummy_anndata["embedding_matrix"]
+        results = task.run(
+            cell_representation=embedding_matrix,
+            task_input=task_input,
+        )
+
+        # Verify results structure
+        assert isinstance(results, list)
+        assert all(isinstance(r, MetricResult) for r in results)
+        assert len(results) > 0
+
+        # Test that baseline raises NotImplementedError
+        with pytest.raises(NotImplementedError):
+            task.compute_baseline(embedding_matrix)
+
+    except Exception as e:
+        pytest.fail(f"KkTestTask failed unexpectedly: {e}")

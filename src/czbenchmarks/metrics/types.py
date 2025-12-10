@@ -57,6 +57,14 @@ class MetricType(Enum):
 
     SPEARMAN_CORRELATION_CALCULATION = "spearman_correlation_calculation"
 
+    # Rare cell detection metrics
+    BALANCED_ACCURACY = "balanced_accuracy"
+    MCC = "mcc"
+    SPECIFICITY = "specificity"
+    MEAN_RECALL_PER_TYPE = "mean_recall_per_type"
+    MIN_RECALL_PER_TYPE = "min_recall_per_type"
+    MEAN_PRECISION_PER_TYPE = "mean_precision_per_type"
+
     # Sequential metrics
     SEQUENTIAL_ALIGNMENT = "sequential_alignment"
 
