@@ -1,0 +1,233 @@
+# Task Integration: {TASK_NAME}
+
+You are tasked with integrating a research-level task implementation into the cz-benchmarks framework. This is a comprehensive integration that must follow the established patterns in the codebase.
+
+## Overview
+
+**Task Name**: {TASK_NAME}
+**Display Name**: {DISPLAY_NAME}
+**Category**: {CATEGORY}
+**Target Branch**: feat/{BRANCH_NAME}
+
+## Research Implementation Analysis
+
+The user has provided a research implementation file with the following components:
+
+### Extracted Components:
+```json
+{ANALYSIS_JSON}
+```
+
+### Full Source Code:
+```python
+{SOURCE_CODE}
+```
+
+## Integration Requirements
+
+You must integrate this research implementation following the cz-benchmarks framework patterns. Based on the recent RareCellDetectionTask implementation (commit 5891c20), here's what needs to be done:
+
+### Step 1: Create Task Implementation File
+
+**Location**: `src/czbenchmarks/tasks/{CATEGORY_PATH}/{TASK_FILE_NAME}.py`
+
+Create a complete task implementation with these components:
+
+1. **TaskInput Model** (Pydantic):
+   - Inherit from `TaskInput`
+   - Define all parameters from the research implementation
+   - Add type hints and Field descriptions
+   - Implement @field_validator decorators for validation
+   - Common parameters to consider:
+     - obs: str (column name for observations/labels)
+     - Labels/grouping columns
+     - Hyperparameters (thresholds, counts, splits, etc.)
+
+2. **TaskOutput Model** (Pydantic):
+   - Inherit from `TaskOutput`
+   - Define fields for storing results
+   - Include intermediate results that metrics will need
+   - Add descriptions for each field
+
+3. **Task Class**:
+   - Inherit from `Task`
+   - Set `display_name` class attribute
+   - Set `input_model` to your TaskInput class
+   - Set `baseline_model` (typically `PCABaselineInput` or `NoBaselineInput`)
+   - Implement `_run_task(self, cell_representation, task_input)`:
+     - Extract data from cell_representation AnnData object
+     - Perform core computation using research implementation logic
+     - Store intermediate results as instance variables (e.g., `self._classifier_results`)
+     - Return TaskOutput instance
+   - Implement `_compute_metrics(self, task_input, task_output)`:
+     - Compute all relevant metrics
+     - Return List[MetricResult]
+     - Each MetricResult needs: metric_type (enum), value (float), params (dict)
+
+**Important patterns to follow**:
+- Use `logger = logging.getLogger(__name__)` for logging
+- Add docstrings to all classes and methods
+- Handle edge cases (empty data, missing values, etc.)
+- Use descriptive variable names
+- Add comments for complex logic
+
+### Step 2: Update Metrics (if needed)
+
+If the research implementation uses metrics not already in the framework:
+
+**File 1**: `src/czbenchmarks/metrics/types.py`
+- Add new MetricType enum values
+- Format: `METRIC_NAME = "metric_name"`
+- Group related metrics together
+
+**File 2**: `src/czbenchmarks/metrics/implementations.py`
+- Import necessary libraries
+- Implement metric computation functions
+- Register each metric with:
+  ```python
+  metrics_registry.register(
+      MetricType.METRIC_NAME,
+      func=implementation_function,
+      required_args={"arg1", "arg2"},
+      description="What this metric measures",
+      tags={"category", "subcategory"},
+  )
+  ```
+
+**Check existing metrics first**: Use grep to search for existing metric names before adding new ones.
+
+### Step 3: Update Module Exports
+
+**File**: `src/czbenchmarks/tasks/{CATEGORY}/__init__.py`
+
+Add imports and exports for the new task:
+```python
+from .{TASK_FILE_NAME} import (
+    {TASK_NAME}Output,
+    {TASK_NAME}Task,
+    {TASK_NAME}TaskInput,
+)
+
+# Add to __all__ list (maintain alphabetical order)
+__all__ = [
+    # ... existing exports ...
+    "{TASK_NAME}Task",
+    "{TASK_NAME}TaskInput",
+    "{TASK_NAME}Output",
+]
+```
+
+### Step 4: Create Comprehensive Test File
+
+**Location**: `tests/tasks/test_{TASK_FILE_NAME}.py`
+
+Create a test file with at least 10-15 test functions covering:
+
+1. **Basic Execution Test**: Smoke test that task runs without errors
+2. **Parameter Validation Tests**: Test invalid inputs raise appropriate errors
+3. **Output Structure Tests**: Verify output has expected structure
+4. **Metric Computation Tests**: Check metrics are computed correctly
+5. **Edge Cases**: Empty data, single class, missing values, etc.
+6. **Baseline Tests**: Test baseline computation works
+7. **Determinism Tests**: Same seed produces same results
+8. **Different Configurations**: Test various parameter combinations
+
+**Pattern**:
+```python
+import pytest
+from czbenchmarks.tasks.{CATEGORY}.{TASK_FILE_NAME} import (
+    {TASK_NAME}Task,
+    {TASK_NAME}TaskInput,
+)
+
+@pytest.fixture
+def test_data():
+    """Create synthetic test data."""
+    # Generate test AnnData object
+    return adata
+
+def test_{TASK_FILE_NAME}_basic_execution(test_data):
+    """Test that the task executes without errors."""
+    task = {TASK_NAME}Task()
+    task_input = {TASK_NAME}TaskInput(...)
+    results = task.run(test_data, task_input)
+    assert isinstance(results, list)
+    assert len(results) > 0
+
+def test_{TASK_FILE_NAME}_input_validation():
+    """Test that input validation works correctly."""
+    with pytest.raises(ValueError, match="error pattern"):
+        {TASK_NAME}TaskInput(invalid_param=...)
+```
+
+### Step 5: Update Integration Tests and Documentation
+
+**File 1**: `tests/tasks/test_tasks.py`
+- Add task to the `@pytest.mark.parametrize` decorator
+- Format: `({TASK_NAME}Task, lambda obs: {TASK_NAME}TaskInput(...), [{{"modality": "single_cell"}}])`
+
+**File 2**: `docs/source/developer_guides/tasks.md`
+- Add a single line to the "Available Tasks" section
+- Format: `- [\`{TASK_NAME}\`](link): Brief description highlighting key features.`
+
+### Step 6: Create Example File (Optional but Recommended)
+
+**Location**: `examples/{TASK_FILE_NAME}_example.py`
+
+Create an end-to-end example showing:
+1. Loading a dataset
+2. Creating task input
+3. Initializing task
+4. Computing baseline
+5. Running task
+6. Interpreting results
+
+Include extensive comments explaining each step.
+
+### Step 7: Validation
+
+After creating all files, run validation:
+1. Run tests: `pytest tests/tasks/test_{TASK_FILE_NAME}.py -v`
+2. Run integration test: `pytest tests/tasks/test_tasks.py -k {TASK_NAME} -v`
+3. Check linting: `ruff check src/czbenchmarks/tasks/{CATEGORY}/{TASK_FILE_NAME}.py`
+4. Verify imports work: `python -c "from czbenchmarks.tasks.{CATEGORY} import {TASK_NAME}Task"`
+
+Fix any errors that arise.
+
+## Key Guidelines
+
+1. **Follow existing patterns**: Look at similar tasks in the codebase for reference
+2. **Use proper typing**: All parameters and returns should have type hints
+3. **Validate inputs**: Use Pydantic field validators extensively
+4. **Handle edge cases**: Think about what could go wrong
+5. **Add logging**: Use logger.debug/info for execution flow
+6. **Write tests**: Comprehensive testing is critical
+7. **Document well**: Docstrings and comments are important
+
+## Configuration Overrides
+
+{CONFIG_OVERRIDES}
+
+## Expected Output
+
+When you're done, the following should be true:
+- [ ] New task implementation file created with all three models
+- [ ] Metrics updated (if new metrics needed)
+- [ ] Module exports updated
+- [ ] Comprehensive test file created with 10+ tests
+- [ ] Integration tests updated
+- [ ] Documentation updated
+- [ ] Example file created (optional)
+- [ ] All tests pass
+- [ ] No linting errors
+- [ ] Task can be imported and instantiated
+- [ ] Changes committed to feature branch
+
+## Getting Started
+
+First, examine the codebase to understand the patterns:
+1. Look at `src/czbenchmarks/tasks/single_cell/rare_cell_detection.py` as a reference
+2. Check existing metrics in `src/czbenchmarks/metrics/types.py`
+3. Review the test patterns in `tests/tasks/test_rare_cell_detection.py`
+
+Then proceed step-by-step through the integration process. Good luck!
